@@ -35,6 +35,8 @@ public class Gameplan extends JPanel implements ActionListener {
 
 		for (int i = 0 ; i < monsters.size() ; i++)
 			monsters.get(i).move();
+		
+		player.moveProjectiles();
 
 		for (int i = 0 ; i < monsters.size() ; i++)
 			player.monsterInRoomBubble(monsters.get(i));
@@ -88,6 +90,14 @@ public class Gameplan extends JPanel implements ActionListener {
 			if (e.getKeyCode() == KeyEvent.VK_F) {
 				player.repellAll();
 			}
+			
+			if (e.getKeyCode() == KeyEvent.VK_G) {
+				player.lightningRush(true);
+			}
+			
+			if (e.getKeyCode() == KeyEvent.VK_Q) {
+				player.shootProjectile();
+			}
 
 			repaint();
 		}
@@ -96,31 +106,41 @@ public class Gameplan extends JPanel implements ActionListener {
 				player.goNorth(false);
 				player.moveGrippedNorth(false);
 			}
+
 			if (e.getKeyCode() == KeyEvent.VK_D) {
 				player.goEast(false);
 				player.moveGrippedEast(false);
 			}
+			
 			if (e.getKeyCode() == KeyEvent.VK_S) {
 				player.goSouth(false);
 				player.moveGrippedSouth(false);
 			}
+			
 			if (e.getKeyCode() == KeyEvent.VK_A) {
 				player.goWest(false);
 				player.moveGrippedWest(false);
 			}
+			
 			if (e.getKeyCode() == KeyEvent.VK_R) {
 				player.setGrip(false);
+			}
+			
+			if (e.getKeyCode() == KeyEvent.VK_G) {
+				player.lightningRush(false);
 			}
 		}
 	};
 	
 	public void paintComponent(Graphics g) {
-		g.setColor(Color.white);
+		g.setColor(Color.lightGray);
 		g.fillRect(0,0,600,400);
 		
 		player.paint(g);
-		
 		for (int i = 0 ; i < monsters.size() ; i++)
 			monsters.get(i).paint(g);
+
+		player.paintProjectiles(g);
+		
 	}
 }

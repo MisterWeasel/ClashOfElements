@@ -4,10 +4,14 @@ import java.util.LinkedList;
 public class Player {
 	private int x;
 	private int y;
+	private int playerDirection;
 	private boolean north;
 	private boolean east;
 	private boolean south;
 	private boolean west;
+	
+	private LinkedList<Projectile> projectiles;
+	private int shootCooldown;
 	
 	private int xBubble;
 	private int yBubble;
@@ -19,13 +23,19 @@ public class Player {
 	private int grippedIndex;
 	private LinkedList<Monster> grippableMonsters;
 	
+	private boolean lightningRushing;
+	
 	public Player(int x, int y) {
 		this.x = x;
 		this.y = y;
+		playerDirection = 0;
 		north = false;
 		east = false;
 		south = false;
 		west = false;
+		
+		projectiles = new LinkedList<Projectile>();
+		shootCooldown = 0;
 		
 		bubbleRoom = false;
 		bubbleRadie = 0;
@@ -33,6 +43,8 @@ public class Player {
 		grip = false;
 		grippedIndex = 0;
 		grippableMonsters = new LinkedList<Monster>();
+		
+		lightningRushing = false;
 	}
 	
 	public boolean isNorth() {
@@ -41,9 +53,9 @@ public class Player {
 
 	public void goNorth(boolean north) {
 		this.north = north;
-//		east = false;
-//		south = false;
-//		west = false;
+		
+		if (north)
+			playerDirection = 0;
 	}
 
 	public boolean isEast() {
@@ -51,10 +63,10 @@ public class Player {
 	}
 
 	public void goEast(boolean east) {
-//		north = false;
 		this.east = east;
-//		south = false;
-//		west = false;
+
+		if (east)
+			playerDirection = 1;
 	}
 
 	public boolean isSouth() {
@@ -62,10 +74,10 @@ public class Player {
 	}
 
 	public void goSouth(boolean south) {
-//		north = false;
-//		east = false;
 		this.south = south;
-//		west = false;
+
+		if (south)
+			playerDirection = 2;
 	}
 
 	public boolean isWest() {
@@ -73,10 +85,10 @@ public class Player {
 	}
 
 	public void goWest(boolean west) {
-//		north = false;
-//		east = false;
-//		south = false;
 		this.west = west;
+
+		if (west)
+			playerDirection = 3;
 	}
 	
 	public void moveGrippedNorth(boolean north) {
@@ -100,14 +112,21 @@ public class Player {
 	}
 
 	public void move() {
+		int movement;
+		if (lightningRushing) {
+			movement = 10;
+		} else {
+			movement = 2;
+		}
+
 		if (north) {
-			y -= 2;
+			y -= movement;
 		} else if (east) {
-			x += 2;
+			x += movement;
 		} else if (south) {
-			y += 2;
+			y += movement;
 		} else if (west) {
-			x -= 2;
+			x -= movement;
 		}
 		
 		if (bubbleRoom && bubbleRadie < bubbleMaxRadie) {
@@ -116,7 +135,32 @@ public class Player {
 			yBubble -= 2;
 		}
 	}
+
+	public void moveProjectiles() {
+		for (int i = 0 ; i < projectiles.size() ; i++)
+			projectiles.get(i).move();
+	}
 	
+	public void shootProjectile() {
+		if (shootCooldown > 0) {
+			shootCooldown--;
+			return;
+		}
+
+		if (playerDirection == 0)
+			projectiles.add(new Projectile(x+2, y+6, playerDirection, 5));
+		else if (playerDirection == 1)
+			projectiles.add(new Projectile(x+10, y+4, playerDirection, 5));
+		else if (playerDirection == 2)
+			projectiles.add(new Projectile(x+4, y+10, playerDirection, 5));
+		else if (playerDirection == 3)
+			projectiles.add(new Projectile(x-6, y+4, playerDirection, 5));
+		else
+			return;
+		
+		shootCooldown = 4;
+	}
+
 	public void createRoomBubble() {
 		if (bubbleRoom)
 			bubbleRoom = false;
@@ -232,6 +276,10 @@ public class Player {
 //			grippableMonsters.get(grippedIndex).shambleMovement();
 		}
 	}
+	
+	public void lightningRush(boolean rushing) {
+		lightningRushing = rushing;
+	}
 
 	public boolean hasGrippableMonsters() {
 		return grippableMonsters.size() > 0;
@@ -249,10 +297,22 @@ public class Player {
 			g.drawOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
 		}
 
-		g.setColor(Color.blue);
-		g.fillOval(x, y, 10, 10);
-		g.setColor(Color.black);
-		g.drawOval(x, y, 10, 10);
+		if (lightningRushing) {
+			g.setColor(Color.yellow);
+			g.fillRect(x+1, y+1, 8, 1);
+			g.fillRect(x+2, y+4, 6, 1);
+			g.fillRect(x, y+7, 10, 1);
+			g.fillRect(x+3, y+9, 4, 1);
+		} else {
+			g.setColor(Color.blue);
+			g.fillOval(x, y, 10, 10);
+			g.setColor(Color.black);
+			g.drawOval(x, y, 10, 10);
+		}
 	}
 
+	public void paintProjectiles(Graphics g) {
+		for (int i = 0 ; i < projectiles.size() ; i++)
+			projectiles.get(i).paint(g);
+	}
 }
