@@ -1,7 +1,7 @@
 import java.awt.*;
 import java.util.LinkedList;
 
-public class Player {
+public class Player extends Playable {
 	private int x;
 	private int y;
 	private int playerDirection;
@@ -11,7 +11,7 @@ public class Player {
 	private boolean west;
 	
 	private LinkedList<Projectile> projectiles;
-	private int shootCooldown;
+	private int shotCooldown;
 	
 	private int xBubble;
 	private int yBubble;
@@ -21,7 +21,7 @@ public class Player {
 
 	private boolean grip;
 	private int grippedIndex;
-	private LinkedList<Monster> grippableMonsters;
+	private LinkedList<Playable> grippableMonsters;
 	
 	private boolean lightningRushing;
 	
@@ -35,14 +35,14 @@ public class Player {
 		west = false;
 		
 		projectiles = new LinkedList<Projectile>();
-		shootCooldown = 0;
+		shotCooldown = 0;
 		
 		bubbleRoom = false;
 		bubbleRadie = 0;
 
 		grip = false;
 		grippedIndex = 0;
-		grippableMonsters = new LinkedList<Monster>();
+		grippableMonsters = new LinkedList<Playable>();
 		
 		lightningRushing = false;
 	}
@@ -142,11 +142,6 @@ public class Player {
 	}
 	
 	public void shootProjectile() {
-		if (shootCooldown > 0) {
-			shootCooldown--;
-			return;
-		}
-
 		if (playerDirection == 0)
 			projectiles.add(new Projectile(x+2, y+6, playerDirection, 5));
 		else if (playerDirection == 1)
@@ -158,7 +153,12 @@ public class Player {
 		else
 			return;
 		
-		shootCooldown = 4;
+		shotCooldown = 15;
+	}
+	
+	public void manageShotCooldown() {
+		if (shotCooldown > 0)
+			shotCooldown--;
 	}
 
 	public void createRoomBubble() {
@@ -173,24 +173,24 @@ public class Player {
 		}
 	}
 	
-	public void monsterInRoomBubble(Monster monster) {
-		if (xBubble <= monster.getX() && monster.getX() <= (xBubble + bubbleRadie) && 
-			yBubble <= monster.getY() && monster.getY() <= (yBubble + bubbleRadie) &&
+	public void playableInRoomBubble(Playable playable) {
+		if (xBubble <= playable.getX() && playable.getX() <= (xBubble + bubbleRadie) && 
+			yBubble <= playable.getY() && playable.getY() <= (yBubble + bubbleRadie) &&
 			bubbleRoom) {
-			if (!grippableMonsters.contains(monster)) {
-				grippableMonsters.add(monster);
-				monster.marking(true);
+			if (!grippableMonsters.contains(playable)) {
+				grippableMonsters.add(playable);
+				playable.marking(true);
 			}
 		} else {
-			if (grippableMonsters.contains(monster)) {
-				if (grippedIndex == grippableMonsters.indexOf(monster)) {
+			if (grippableMonsters.contains(playable)) {
+				if (grippedIndex == grippableMonsters.indexOf(playable)) {
 					grippedIndex = (grippedIndex == 0 ? 0 : grippedIndex--);
 				}
-				grippableMonsters.remove(monster);
+				grippableMonsters.remove(playable);
 				if (grippableMonsters.size() > 0)
 					grippableMonsters.get(grippedIndex).grip(true);
-				monster.marking(false);
-				monster.grip(false);
+				playable.marking(false);
+				playable.grip(false);
 			}
 		}
 	}
@@ -281,6 +281,21 @@ public class Player {
 		lightningRushing = rushing;
 	}
 
+	public boolean playerInRoomBubble() {
+		if (xBubble <= x && x <= (xBubble + bubbleRadie) && 
+			yBubble <= y && y <= (yBubble + bubbleRadie))
+			return true;
+		else
+			return false;
+	}
+
+	public boolean canShoot() {
+		if (shotCooldown > 0)
+			return false;
+		else 
+			return true;
+	}
+
 	public boolean hasGrippableMonsters() {
 		return grippableMonsters.size() > 0;
 	}
@@ -290,8 +305,9 @@ public class Player {
 	}
 	
 	public void paint(Graphics g) {
+		Color lightBlue = new Color(100,200,255);
 		if (bubbleRoom) {
-			g.setColor(Color.yellow);
+			g.setColor(lightBlue);
 			g.fillOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
 			g.setColor(Color.black);
 			g.drawOval(xBubble, yBubble, bubbleRadie, bubbleRadie);

@@ -38,7 +38,7 @@ public class Projectile {
 		} else if (direction == 2) {
 			y += movementSpeed;
 		} else if (direction == 3) {
-			y -= movementSpeed;
+			x -= movementSpeed;
 		}
 	}
 	

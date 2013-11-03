@@ -1,6 +1,6 @@
 import java.awt.*;
 
-public class Monster {
+public class Monster extends Playable {
 	private int x;
 	private int y;
 	private boolean north;

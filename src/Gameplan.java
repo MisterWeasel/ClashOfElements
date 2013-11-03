@@ -37,9 +37,10 @@ public class Gameplan extends JPanel implements ActionListener {
 			monsters.get(i).move();
 		
 		player.moveProjectiles();
+		player.manageShotCooldown();
 
 		for (int i = 0 ; i < monsters.size() ; i++)
-			player.monsterInRoomBubble(monsters.get(i));
+			player.playableInRoomBubble(monsters.get(i));
 			
 		repaint();
 	}
@@ -88,7 +89,8 @@ public class Gameplan extends JPanel implements ActionListener {
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_F) {
-				player.repellAll();
+				if (player.playerInRoomBubble())
+					player.repellAll();
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_G) {
@@ -96,7 +98,8 @@ public class Gameplan extends JPanel implements ActionListener {
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_Q) {
-				player.shootProjectile();
+				if (player.canShoot())
+					player.shootProjectile();
 			}
 
 			repaint();
@@ -133,8 +136,20 @@ public class Gameplan extends JPanel implements ActionListener {
 	};
 	
 	public void paintComponent(Graphics g) {
+		g.setColor(Color.blue);
+		g.fillRect(0,0,650,600);
 		g.setColor(Color.lightGray);
-		g.fillRect(0,0,600,400);
+		g.fillRect(10,10,594,366);
+		g.setColor(Color.black);
+		g.fillRect(0,0,10,10); // top left corner
+		g.fillRect(10,0,594,10); // top side
+		g.fillRect(604,0,10,10); // top right corner
+		g.fillRect(0,10,10,366); // left side
+		g.fillRect(604,10,10,366); // right side
+		g.fillRect(0,376,10,10); // bottom left corner
+		g.fillRect(10,376,594,10); // bottom side
+		g.setColor(Color.yellow);
+		g.fillRect(604,376,10,10); // bottom right corner
 		
 		player.paint(g);
 		for (int i = 0 ; i < monsters.size() ; i++)
