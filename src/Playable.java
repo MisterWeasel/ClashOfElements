@@ -7,6 +7,10 @@ public class Playable {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public void setAlive(boolean alive) {
+		
+	}
+	
 	public void goNorth(boolean north) {
 		
 	}
@@ -20,6 +24,10 @@ public class Playable {
 	}
 
 	public void goWest(boolean west) {
+		
+	}
+	
+	public void caughtByBlackHole(boolean caught) {
 		
 	}
 	
@@ -39,8 +47,16 @@ public class Playable {
 		this.x = x;
 	}
 
+	public void addX(int addX) {
+		this.x += addX;
+	}
+
 	public void setY(int y) {
 		this.y = y;
+	}
+
+	public void addY(int addY) {
+		this.y += addY;
 	}
 
 	public int getX() {

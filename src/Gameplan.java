@@ -34,13 +34,16 @@ public class Gameplan extends JPanel implements ActionListener {
 		player.move();
 
 		for (int i = 0 ; i < monsters.size() ; i++)
-			monsters.get(i).move();
+			if (!monsters.get(i).isCaughtByBlackHole())
+				monsters.get(i).move();
 		
 		player.moveProjectiles();
 		player.manageShotCooldown();
 
-		for (int i = 0 ; i < monsters.size() ; i++)
+		for (int i = 0 ; i < monsters.size() ; i++) {
 			player.playableInRoomBubble(monsters.get(i));
+			player.playableInBlackHole(monsters.get(i));
+		}
 			
 		repaint();
 	}
@@ -86,6 +89,10 @@ public class Gameplan extends JPanel implements ActionListener {
 				if (player.hasGrip()) {
 					player.gripNextMonster();
 				}
+			}
+			
+			if (e.getKeyCode() == KeyEvent.VK_Y) {
+				player.createBlackHole();
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_F) {
@@ -136,10 +143,17 @@ public class Gameplan extends JPanel implements ActionListener {
 	};
 	
 	public void paintComponent(Graphics g) {
-		g.setColor(Color.blue);
-		g.fillRect(0,0,650,600);
+/**/	g.setColor(Color.blue);
+/**/	g.fillRect(0,0,650,600);
 		g.setColor(Color.lightGray);
 		g.fillRect(10,10,594,366);
+
+		player.paint(g);
+		for (int i = 0 ; i < monsters.size() ; i++)
+			monsters.get(i).paint(g);
+
+		player.paintProjectiles(g);
+		
 		g.setColor(Color.black);
 		g.fillRect(0,0,10,10); // top left corner
 		g.fillRect(10,0,594,10); // top side
@@ -148,14 +162,7 @@ public class Gameplan extends JPanel implements ActionListener {
 		g.fillRect(604,10,10,366); // right side
 		g.fillRect(0,376,10,10); // bottom left corner
 		g.fillRect(10,376,594,10); // bottom side
-		g.setColor(Color.yellow);
 		g.fillRect(604,376,10,10); // bottom right corner
-		
-		player.paint(g);
-		for (int i = 0 ; i < monsters.size() ; i++)
-			monsters.get(i).paint(g);
-
-		player.paintProjectiles(g);
 		
 	}
 }

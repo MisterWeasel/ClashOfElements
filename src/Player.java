@@ -4,6 +4,8 @@ import java.util.LinkedList;
 public class Player extends Playable {
 	private int x;
 	private int y;
+	private boolean alive;
+	
 	private int playerDirection;
 	private boolean north;
 	private boolean east;
@@ -18,7 +20,17 @@ public class Player extends Playable {
 	private int bubbleRadie;
 	private final int bubbleMaxRadie = 200;
 	private boolean bubbleRoom;
+	
+	private boolean blackHole;
+	private boolean blackHoleGrowing;
+	private int blackHoleX;
+	private int blackHoleY;
+	private final int blackHoleMaxRadie = 100;
+	private int blackHoleRadie;
 
+	private boolean caughtByBlackHole;
+	private LinkedList<Playable> blackHoleCaptures;
+	
 	private boolean grip;
 	private int grippedIndex;
 	private LinkedList<Playable> grippableMonsters;
@@ -28,6 +40,8 @@ public class Player extends Playable {
 	public Player(int x, int y) {
 		this.x = x;
 		this.y = y;
+		alive = true;
+		
 		playerDirection = 0;
 		north = false;
 		east = false;
@@ -40,11 +54,22 @@ public class Player extends Playable {
 		bubbleRoom = false;
 		bubbleRadie = 0;
 
+		blackHole = false;
+		blackHoleGrowing = false;
+		blackHoleRadie = 0;
+		blackHoleCaptures = new LinkedList<Playable>();
+		
 		grip = false;
 		grippedIndex = 0;
 		grippableMonsters = new LinkedList<Playable>();
 		
 		lightningRushing = false;
+		
+		caughtByBlackHole = false;
+	}
+	
+	public void setAlive(boolean alive) {
+		this.alive = alive;
 	}
 	
 	public boolean isNorth() {
@@ -134,6 +159,37 @@ public class Player extends Playable {
 			xBubble -= 2;
 			yBubble -= 2;
 		}
+
+		if (blackHole) {
+			if (blackHoleGrowing) {
+				blackHoleRadie += 4;
+				blackHoleX -= 2;
+				blackHoleY -= 2;
+			} else {
+				blackHoleRadie -= 4;
+				blackHoleX += 2;
+				blackHoleY += 2;
+				
+				if (blackHoleRadie > 0) {
+					for (int i = 0 ; i < blackHoleCaptures.size() ; i++) {
+						int diffX = x - blackHoleCaptures.get(i).getX();
+						int diffY = y - blackHoleCaptures.get(i).getY();
+						blackHoleCaptures.get(i).addX(diffX / (blackHoleRadie / 4));
+						blackHoleCaptures.get(i).addY(diffY / (blackHoleRadie / 4));
+					}
+				} else {
+					for (int i = 0 ; i < blackHoleCaptures.size() ; i++)
+						if (blackHoleCaptures.get(i).getX() == x &&
+							blackHoleCaptures.get(i).getY() == y)
+							blackHoleCaptures.get(i).setAlive(false);
+				}
+			}
+
+			if (blackHoleRadie == blackHoleMaxRadie)
+				blackHoleGrowing = false;
+			if (blackHoleRadie == 0)
+				blackHole = false;
+		}
 	}
 
 	public void moveProjectiles() {
@@ -173,6 +229,17 @@ public class Player extends Playable {
 		}
 	}
 	
+	public void createBlackHole() {
+		if (!blackHole) {
+			blackHoleRadie = 0;
+			blackHoleX = x + 5;
+			blackHoleY = y + 5;
+			
+			blackHole = true;
+			blackHoleGrowing = true;
+		}
+	}
+	
 	public void playableInRoomBubble(Playable playable) {
 		if (xBubble <= playable.getX() && playable.getX() <= (xBubble + bubbleRadie) && 
 			yBubble <= playable.getY() && playable.getY() <= (yBubble + bubbleRadie) &&
@@ -193,6 +260,21 @@ public class Player extends Playable {
 				playable.grip(false);
 			}
 		}
+	}
+	
+	public void playableInBlackHole(Playable playable) {
+		if (blackHoleX <= playable.getX() && playable.getX() <= (blackHoleX + blackHoleRadie) && 
+			blackHoleY <= playable.getY() && playable.getY() <= (blackHoleY + blackHoleRadie) &&
+			blackHole) {
+			if (!blackHoleCaptures.contains(playable)) {
+				blackHoleCaptures.add(playable);
+				playable.caughtByBlackHole(true);
+			}
+		}
+	}
+	
+	public void caughtByBlackHole(boolean caught) {
+		caughtByBlackHole = caught;
 	}
 	
 	public void setGrip(boolean grip) {
@@ -303,27 +385,40 @@ public class Player extends Playable {
 	public boolean hasGrip() {
 		return grip;
 	}
+
+	public boolean isCaughtByBlackHole() {
+		return caughtByBlackHole;
+	}
 	
 	public void paint(Graphics g) {
 		Color lightBlue = new Color(100,200,255);
-		if (bubbleRoom) {
-			g.setColor(lightBlue);
-			g.fillOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
-			g.setColor(Color.black);
-			g.drawOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
-		}
+		if (alive) {
+			if (bubbleRoom) {
+				g.setColor(lightBlue);
+				g.fillOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
+				g.setColor(Color.black);
+				g.drawOval(xBubble, yBubble, bubbleRadie, bubbleRadie);
+			}
 
-		if (lightningRushing) {
-			g.setColor(Color.yellow);
-			g.fillRect(x+1, y+1, 8, 1);
-			g.fillRect(x+2, y+4, 6, 1);
-			g.fillRect(x, y+7, 10, 1);
-			g.fillRect(x+3, y+9, 4, 1);
-		} else {
-			g.setColor(Color.blue);
-			g.fillOval(x, y, 10, 10);
-			g.setColor(Color.black);
-			g.drawOval(x, y, 10, 10);
+			if (blackHole) {
+				g.setColor(Color.darkGray);
+				g.fillOval(blackHoleX, blackHoleY, blackHoleRadie, blackHoleRadie);
+				g.setColor(Color.black);
+				g.drawOval(blackHoleX, blackHoleY, blackHoleRadie, blackHoleRadie);
+			}
+			
+			if (lightningRushing) {
+				g.setColor(Color.yellow);
+				g.fillRect(x+1, y+1, 8, 1);
+				g.fillRect(x+2, y+4, 6, 1);
+				g.fillRect(x, y+7, 10, 1);
+				g.fillRect(x+3, y+9, 4, 1);
+			} else {
+				g.setColor(Color.blue);
+				g.fillOval(x, y, 10, 10);
+				g.setColor(Color.black);
+				g.drawOval(x, y, 10, 10);
+			}
 		}
 	}
 
