@@ -22,6 +22,11 @@ public class Monster extends Playable {
 	
 	private boolean caughtByBlackHole;
 	
+	private boolean negateGripReach;
+	private boolean negateGrip;
+	private boolean negated;
+	private int negateTimer;
+	
 	public Monster(int x, int y) {
 		this.x = x;
 		this.y = y;
@@ -43,6 +48,11 @@ public class Monster extends Playable {
 		repelling = false;
 		
 		caughtByBlackHole = false;
+		
+		negateGripReach = false;
+		negateGrip = false;
+		negated = false;
+		negateTimer = 0;
 	}
 	
 	public void setAlive(boolean alive) {
@@ -115,6 +125,27 @@ public class Monster extends Playable {
 		repelling = true;
 	}
 	
+	public void negateGripReach(boolean negateGripReach) {
+		this.negateGripReach = negateGripReach;
+	}
+	
+	public void negateGrip(boolean negateGrip) {
+		this.negateGrip = negateGrip;
+	}
+	
+	public void negated() {
+		negated = true;
+		negateTimer = 240;
+	}
+	
+	public void manageNegation() {
+		if (negateTimer > 0) {
+			negateTimer--;
+			if (negateTimer == 0)
+				negated = false;
+		}
+	}
+	
 	public int getX() {
 		return x;
 	}
@@ -162,7 +193,11 @@ public class Monster extends Playable {
 	public boolean isCaughtByBlackHole() {
 		return caughtByBlackHole;
 	}
-	
+
+	public boolean inNegateGripReach() {
+		return negateGripReach;
+	}
+
 	public void paint(Graphics g) {
 		if (alive) {
 			if (splitted) {
@@ -184,10 +219,22 @@ public class Monster extends Playable {
 						g.setColor(Color.red);
 					g.fillOval(x-2, y-2, 14, 14);
 				}
+				if (negateGrip) {
+					g.setColor(Color.darkGray);
+					g.fillOval(x-2, y-2, 14, 14);
+				} else if (negateGripReach) {
+					g.setColor(Color.darkGray);
+					g.drawOval(x-2, y-2, 14, 14);
+				}
 				g.setColor(Color.green);
 				g.fillOval(x, y, 10, 10);
 				g.setColor(Color.black);
 				g.drawOval(x, y, 10, 10);
+				if (negated) {
+					g.setColor(Color.darkGray);
+					g.drawLine(x-4+5, y-4+5, x+4+5, y+4+5);
+					g.drawLine(x-4+5, y+4+5, x+4+5, y-4+5);
+				}
 			}
 		}
 	}

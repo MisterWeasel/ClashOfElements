@@ -7,6 +7,18 @@ public class Playable {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public void negateGripReach(boolean negateGripReach) {
+//		this.negateGripReach = negateGripReach;
+	}
+	
+	public void negateGrip(boolean negateGrip) {
+//		this.negateGrip = negateGrip;
+	}
+	
+	public void negated() {
+		
+	}
+
 	public void setAlive(boolean alive) {
 		
 	}

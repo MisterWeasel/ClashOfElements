@@ -27,7 +27,7 @@ public class ElementalFrame extends JFrame {
 //		add(westPanel, BorderLayout.WEST);
 //		add(eastPanel, BorderLayout.EAST);
 		
-		setSize(630,460);
+		setSize(630,561);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}

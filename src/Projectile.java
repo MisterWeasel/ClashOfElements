@@ -2,12 +2,14 @@ import java.awt.Graphics;
 import java.awt.Color;
 
 public class Projectile {
+	private int type;
 	private int x;
 	private int y;
 	private int direction;
 	private int movementSpeed;
 	
-	public Projectile(int x, int y, int direction, int movementSpeed) {
+	public Projectile(int type, int x, int y, int direction, int movementSpeed) {
+		this.type = type;
 		this.x = x;
 		this.y = y;
 		this.direction = direction;
@@ -20,6 +22,10 @@ public class Projectile {
 
 	public void setY(int y) {
 		this.y = y;
+	}
+	
+	public int getType() {
+		return type;
 	}
 
 	public int getX() {
@@ -43,7 +49,15 @@ public class Projectile {
 	}
 	
 	public void paint(Graphics g) {
-		g.setColor(Color.orange);
-		g.fillRect(x, y, 6, 6);
+		if (type == 0) {
+			g.setColor(Color.orange);
+			g.fillRect(x, y, 6, 6);
+		} else if (type == 1) {
+			g.setColor(Color.yellow);
+			if (direction%2 == 0)
+				g.fillRect(x, y, 4, 16);
+			else if (direction%2 == 1)
+				g.fillRect(x, y, 16, 4);
+		}
 	}
 }

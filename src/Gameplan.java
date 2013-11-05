@@ -33,9 +33,11 @@ public class Gameplan extends JPanel implements ActionListener {
 		
 		player.move();
 
-		for (int i = 0 ; i < monsters.size() ; i++)
+		for (int i = 0 ; i < monsters.size() ; i++) {
 			if (!monsters.get(i).isCaughtByBlackHole())
 				monsters.get(i).move();
+			monsters.get(i).manageNegation();
+		}
 		
 		player.moveProjectiles();
 		player.manageShotCooldown();
@@ -43,6 +45,8 @@ public class Gameplan extends JPanel implements ActionListener {
 		for (int i = 0 ; i < monsters.size() ; i++) {
 			player.playableInRoomBubble(monsters.get(i));
 			player.playableInBlackHole(monsters.get(i));
+			if (player.getState() == Player.NEGATER)
+				player.playableInNegateGripReach(monsters.get(i));
 		}
 			
 		repaint();
@@ -55,20 +59,17 @@ public class Gameplan extends JPanel implements ActionListener {
 					player.moveGrippedNorth(true);
 				else
 					player.goNorth(true);
-			}
-			else if (e.getKeyCode() == KeyEvent.VK_D) {
+			} else if (e.getKeyCode() == KeyEvent.VK_D) {
 				if (player.hasGrip())
 					player.moveGrippedEast(true);
 				else
 					player.goEast(true);
-			}
-			else if (e.getKeyCode() == KeyEvent.VK_S) {
+			} else if (e.getKeyCode() == KeyEvent.VK_S) {
 				if (player.hasGrip())
 					player.moveGrippedSouth(true);
 				else
 					player.goSouth(true);
-			}
-			else if (e.getKeyCode() == KeyEvent.VK_A) {
+			} else if (e.getKeyCode() == KeyEvent.VK_A) {
 				if (player.hasGrip())
 					player.moveGrippedWest(true);
 				else
@@ -76,23 +77,30 @@ public class Gameplan extends JPanel implements ActionListener {
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_E) {
-				player.createRoomBubble();
+				if (player.getState() == Player.MANIPULATOR)
+					player.createRoomBubble();
+				else if (player.getState() == Player.DARKNESS)
+					player.createBlackHole();
+				else if (player.getState() == Player.LIGHT)
+					player.fireLaser();
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_R) {
-				if (player.hasGrippableMonsters()) {
-					player.setGrip(true);
+				if (player.getState() == Player.MANIPULATOR) {
+					if (player.hasGrippableMonsters())
+						player.setGrip(true);
+				} else if (player.getState() == Player.NEGATER) {
+					player.negateGripOpponent(true);
 				}
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_T) {
-				if (player.hasGrip()) {
-					player.gripNextMonster();
+				if (player.getState() == Player.MANIPULATOR) {
+					if (player.hasGrip())
+						player.gripNextMonster();
+				} else if (player.getState() == Player.NEGATER) {
+					player.negateGripNextMonster();
 				}
-			}
-			
-			if (e.getKeyCode() == KeyEvent.VK_Y) {
-				player.createBlackHole();
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_F) {
@@ -101,12 +109,27 @@ public class Gameplan extends JPanel implements ActionListener {
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_G) {
-				player.lightningRush(true);
+				if (player.getState() == Player.LIGHT)
+					player.lightningRush(true);
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_Q) {
 				if (player.canShoot())
 					player.shootProjectile();
+			}
+			
+			if (e.getKeyCode() == KeyEvent.VK_0) {
+				player.setState(0);
+			} else if (e.getKeyCode() == KeyEvent.VK_1) {
+				player.setState(1);
+			} else if (e.getKeyCode() == KeyEvent.VK_2) {
+				player.setState(2);
+			} else if (e.getKeyCode() == KeyEvent.VK_3) {
+				player.setState(3);
+			} else if (e.getKeyCode() == KeyEvent.VK_4) {
+				player.setState(4);
+			} else if (e.getKeyCode() == KeyEvent.VK_5) {
+				player.setState(5);
 			}
 
 			repaint();
@@ -133,7 +156,11 @@ public class Gameplan extends JPanel implements ActionListener {
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_R) {
-				player.setGrip(false);
+				if (player.getState() == Player.MANIPULATOR) {
+					player.setGrip(false);
+				} else if (player.getState() == Player.NEGATER) {
+					player.negateGripOpponent(false);
+				}
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_G) {
@@ -164,5 +191,25 @@ public class Gameplan extends JPanel implements ActionListener {
 		g.fillRect(10,376,594,10); // bottom side
 		g.fillRect(604,376,10,10); // bottom right corner
 		
+		// Player-information box
+		g.setColor(Color.orange);
+		g.fillRect(0,386,200,100);
+		// hp-coloring
+		g.setColor(Color.green);
+		g.fillRect(3, 400, player.getHP(), 10);
+		g.setColor(Color.red);
+		g.fillRect(3 + player.getHP(), 400, 50 - player.getHP(), 10);
+		// mana-coloring
+		g.setColor(Color.blue);
+		g.fillRect(3, 431, player.getMana() * 50 / player.getMaxMana(), 10);
+		g.setColor(Color.lightGray);
+		g.fillRect(3 + player.getMana() * 50 / player.getMaxMana(), 431, 50 - player.getMana() * 50 / player.getMaxMana(), 10);
+		g.setColor(Color.black);
+		g.drawString("Player 1", 2, 398);
+		g.drawRect(3, 400, 50, 10); // hp-box
+		g.drawRect(3, 431, 50, 10); // mana-box
+		g.drawString("HP: " + player.getHP() + "/" + player.getMaxHP(), 2, 424);
+		g.drawString("Mana: " + player.getMana() + "/" + player.getMaxMana(), 2, 455);
+		g.drawString("State: " + player.getStateString(), 2, 471);
 	}
 }

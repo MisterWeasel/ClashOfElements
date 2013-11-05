@@ -2,9 +2,21 @@ import java.awt.*;
 import java.util.LinkedList;
 
 public class Player extends Playable {
+	public static final int NORMAL = 0;
+	public static final int MANIPULATOR = 1;
+	public static final int DARKNESS = 2;
+	public static final int LIGHT = 3;
+	public static final int NEGATER = 4;
+	
 	private int x;
 	private int y;
 	private boolean alive;
+	private int state;
+	private int hp;
+	private int maxHP;
+	private int mana;
+	private int maxMana;
+	private int manaTimer;
 	
 	private int playerDirection;
 	private boolean north;
@@ -36,11 +48,23 @@ public class Player extends Playable {
 	private LinkedList<Playable> grippableMonsters;
 	
 	private boolean lightningRushing;
+	private boolean laserCharge;
+	private int laserChargeTime;
+	
+	private final int negateGripReach = 150;
+	private int negateGripIndex;
+	private LinkedList<Playable> negateGrippableMonsters;
 	
 	public Player(int x, int y) {
 		this.x = x;
 		this.y = y;
 		alive = true;
+		maxHP = 50;
+		hp = maxHP;
+		maxMana = 100;
+		mana = maxMana;
+		state = 0;
+		manaTimer = 0;
 		
 		playerDirection = 0;
 		north = false;
@@ -58,16 +82,61 @@ public class Player extends Playable {
 		blackHoleGrowing = false;
 		blackHoleRadie = 0;
 		blackHoleCaptures = new LinkedList<Playable>();
+		caughtByBlackHole = false;
 		
 		grip = false;
 		grippedIndex = 0;
 		grippableMonsters = new LinkedList<Playable>();
 		
 		lightningRushing = false;
+		laserCharge = false;
+		laserChargeTime = 0;
 		
-		caughtByBlackHole = false;
+		negateGripIndex = 0;
+		negateGrippableMonsters = new LinkedList<Playable>();
 	}
 	
+	public int getHP() {
+		return hp;
+	}
+
+	public int getMaxHP() {
+		return maxHP;
+	}
+	
+	public int getMana() {
+		return mana;
+	}
+
+	public int getMaxMana() {
+		return maxMana;
+	}
+	
+	public String getStateString() {
+		if (state == NORMAL)
+			return "Normal";
+		else if (state == MANIPULATOR)
+			return "Manipulator";
+		else if (state == DARKNESS)
+			return "Darkness";
+		else if (state == LIGHT)
+			return "Light";
+		else if (state == NEGATER)
+			return "Negater";
+		else 
+			return "null";
+	}
+	
+	public void setState(int state) {
+		if (this.state == MANIPULATOR && state != MANIPULATOR)
+			bubbleRoom = false;
+		this.state = state;
+	}
+
+	public int getState() {
+		return state;
+	}
+
 	public void setAlive(boolean alive) {
 		this.alive = alive;
 	}
@@ -140,6 +209,11 @@ public class Player extends Playable {
 		int movement;
 		if (lightningRushing) {
 			movement = 10;
+			mana -= 2;
+			if (mana < 0) {
+				mana = 0;
+				lightningRushing = false;
+			}
 		} else {
 			movement = 2;
 		}
@@ -154,10 +228,39 @@ public class Player extends Playable {
 			x -= movement;
 		}
 		
+		if (mana < maxMana) {
+			if (manaTimer%2 == 0) {
+				mana += 100;
+				if (mana > maxMana)
+					mana = maxMana;
+			}
+			manaTimer++;
+		}
+		else {
+			manaTimer = 0;
+		}
+		
 		if (bubbleRoom && bubbleRadie < bubbleMaxRadie) {
 			bubbleRadie += 4;
 			xBubble -= 2;
 			yBubble -= 2;
+		}
+		
+		if (laserCharge) {
+			if (laserChargeTime == 50) {
+				laserChargeTime = 0;
+				laserCharge = false;
+				if (playerDirection == 0)
+					projectiles.add(new Projectile(1, x+3, y-16, 0, 10));
+				else if (playerDirection == 1)
+					projectiles.add(new Projectile(1, x+10, y+3, 1, 10));
+				else if (playerDirection == 2)
+					projectiles.add(new Projectile(1, x+3, y+10, 2, 10));
+				else if (playerDirection == 3)
+					projectiles.add(new Projectile(1, x-16, y+3, 3, 10));
+			} else {
+				laserChargeTime++;
+			}
 		}
 
 		if (blackHole) {
@@ -198,18 +301,21 @@ public class Player extends Playable {
 	}
 	
 	public void shootProjectile() {
-		if (playerDirection == 0)
-			projectiles.add(new Projectile(x+2, y+6, playerDirection, 5));
-		else if (playerDirection == 1)
-			projectiles.add(new Projectile(x+10, y+4, playerDirection, 5));
-		else if (playerDirection == 2)
-			projectiles.add(new Projectile(x+4, y+10, playerDirection, 5));
-		else if (playerDirection == 3)
-			projectiles.add(new Projectile(x-6, y+4, playerDirection, 5));
-		else
-			return;
-		
-		shotCooldown = 15;
+		if (mana >= 10) {
+			if (playerDirection == 0)
+				projectiles.add(new Projectile(0, x+2, y+6, playerDirection, 5));
+			else if (playerDirection == 1)
+				projectiles.add(new Projectile(0, x+10, y+4, playerDirection, 5));
+			else if (playerDirection == 2)
+				projectiles.add(new Projectile(0, x+4, y+10, playerDirection, 5));
+			else if (playerDirection == 3)
+				projectiles.add(new Projectile(0, x-6, y+4, playerDirection, 5));
+			else
+				return;
+			
+			shotCooldown = 15;
+			mana -= 10;
+		}
 	}
 	
 	public void manageShotCooldown() {
@@ -273,6 +379,20 @@ public class Player extends Playable {
 		}
 	}
 	
+	public void playableInNegateGripReach(Playable playable) {
+		if ((Math.pow(x - playable.getX(), 2) + Math.pow(y - playable.getY(), 2)) <= Math.pow(negateGripReach/2, 2)) {
+			if (!negateGrippableMonsters.contains(playable)) {
+				playable.negateGripReach(true);
+				negateGrippableMonsters.add(playable);
+			}
+		} else {
+			playable.negateGripReach(false);
+			playable.negateGrip(false);
+			if (negateGrippableMonsters.contains(playable))
+				negateGrippableMonsters.remove(playable);
+		}
+	}
+	
 	public void caughtByBlackHole(boolean caught) {
 		caughtByBlackHole = caught;
 	}
@@ -296,12 +416,30 @@ public class Player extends Playable {
 			grippedIndex = 0;
 		}
 	}
-	
+
+	public void negateGripOpponent(boolean negateGrip) {
+		if (negateGrip) {
+			negateGripIndex = 0;
+			negateGrippableMonsters.get(negateGripIndex).negateGrip(true);
+		} else {
+			negateGrippableMonsters.get(negateGripIndex).negateGrip(false);
+			negateGrippableMonsters.get(negateGripIndex).negated();
+		}
+	}
+
 	public void gripNextMonster () {
 		if (grippableMonsters.size() > 0) {
 			grippableMonsters.get(grippedIndex).grip(false);
 			grippedIndex = (grippedIndex + 1) % grippableMonsters.size();
 			grippableMonsters.get(grippedIndex).grip(true);
+		}
+	}
+
+	public void negateGripNextMonster () {
+		if (negateGrippableMonsters.size() > 0) {
+			negateGrippableMonsters.get(negateGripIndex).negateGrip(false);
+			negateGripIndex = (negateGripIndex + 1) % negateGrippableMonsters.size();
+			negateGrippableMonsters.get(negateGripIndex).negateGrip(true);
 		}
 	}
 
@@ -360,7 +498,18 @@ public class Player extends Playable {
 	}
 	
 	public void lightningRush(boolean rushing) {
-		lightningRushing = rushing;
+		if (rushing) {
+			if (mana >= 10) {
+				mana -= 10;
+				lightningRushing = true;
+			}
+		} else
+			lightningRushing = false;
+	}
+
+	public void fireLaser() {
+		laserCharge = true;
+		laserChargeTime = 0;
 	}
 
 	public boolean playerInRoomBubble() {
@@ -389,7 +538,7 @@ public class Player extends Playable {
 	public boolean isCaughtByBlackHole() {
 		return caughtByBlackHole;
 	}
-	
+
 	public void paint(Graphics g) {
 		Color lightBlue = new Color(100,200,255);
 		if (alive) {
@@ -418,6 +567,23 @@ public class Player extends Playable {
 				g.fillOval(x, y, 10, 10);
 				g.setColor(Color.black);
 				g.drawOval(x, y, 10, 10);
+			}
+			
+			if (state == NEGATER) {
+				g.setColor(Color.black);
+				g.drawOval(x + 5 - negateGripReach/2, y + 5 - negateGripReach/2, negateGripReach, negateGripReach);
+			}
+			
+			if (laserCharge) {
+				g.setColor(new Color(255, 255 - laserChargeTime * 5,0));
+				if (playerDirection == 0)
+					g.fillRect(x+3, y-4, 4, 4);
+				else if (playerDirection == 1)
+					g.fillRect(x+10, y+3, 4, 4);
+				else if (playerDirection == 2)
+					g.fillRect(x+3, y+10, 4, 4);
+				else if (playerDirection == 3)
+					g.fillRect(x-4, y+3, 4, 4);
 			}
 		}
 	}
