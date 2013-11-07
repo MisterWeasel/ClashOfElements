@@ -7,6 +7,7 @@ public class Player extends Playable {
 	public static final int DARKNESS = 2;
 	public static final int LIGHT = 3;
 	public static final int NEGATER = 4;
+	public static final int ICE = 5;
 	
 	private int x;
 	private int y;
@@ -54,6 +55,12 @@ public class Player extends Playable {
 	private final int negateGripReach = 150;
 	private int negateGripIndex;
 	private LinkedList<Playable> negateGrippableMonsters;
+
+	private boolean frozenZone;
+	private int frozenZoneTimer;
+	private int frozenZoneStage;
+	private int frozenZoneX;
+	private int frozenZoneY;
 	
 	public Player(int x, int y) {
 		this.x = x;
@@ -94,6 +101,12 @@ public class Player extends Playable {
 		
 		negateGripIndex = 0;
 		negateGrippableMonsters = new LinkedList<Playable>();
+		
+		frozenZone = false;
+		frozenZoneTimer = 0;
+		frozenZoneStage = 0;
+		frozenZoneX = 0;
+		frozenZoneY = 0;
 	}
 	
 	public int getHP() {
@@ -123,6 +136,8 @@ public class Player extends Playable {
 			return "Light";
 		else if (state == NEGATER)
 			return "Negater";
+		else if (state == ICE)
+			return "Ice";
 		else 
 			return "null";
 	}
@@ -293,6 +308,16 @@ public class Player extends Playable {
 			if (blackHoleRadie == 0)
 				blackHole = false;
 		}
+		
+		if (frozenZone) {
+			frozenZoneTimer++;
+			if (frozenZoneTimer%15 == 0)
+				if (frozenZoneStage < 3) {
+					frozenZoneStage++;
+					frozenZoneX -= 10;
+					frozenZoneY -= 10;
+				}
+		}
 	}
 
 	public void moveProjectiles() {
@@ -301,20 +326,38 @@ public class Player extends Playable {
 	}
 	
 	public void shootProjectile() {
-		if (mana >= 10) {
-			if (playerDirection == 0)
-				projectiles.add(new Projectile(0, x+2, y+6, playerDirection, 5));
-			else if (playerDirection == 1)
-				projectiles.add(new Projectile(0, x+10, y+4, playerDirection, 5));
-			else if (playerDirection == 2)
-				projectiles.add(new Projectile(0, x+4, y+10, playerDirection, 5));
-			else if (playerDirection == 3)
-				projectiles.add(new Projectile(0, x-6, y+4, playerDirection, 5));
-			else
-				return;
-			
-			shotCooldown = 15;
-			mana -= 10;
+		if (state == LIGHT) {
+			if (mana >= 10) {
+				if (playerDirection == 0)
+					projectiles.add(new Projectile(0, x+3, y-6, playerDirection, 5));
+				else if (playerDirection == 1)
+					projectiles.add(new Projectile(0, x+10, y+3, playerDirection, 5));
+				else if (playerDirection == 2)
+					projectiles.add(new Projectile(0, x+3, y+10, playerDirection, 5));
+				else if (playerDirection == 3)
+					projectiles.add(new Projectile(0, x-6, y+3, playerDirection, 5));
+				else
+					return;
+				
+				shotCooldown = 15;
+				mana -= 10;
+			}
+		} else if (state == ICE) {
+			if (mana >= 15) {
+				if (playerDirection == 0)
+					projectiles.add(new Projectile(2, x+2, y-8, playerDirection, 3));
+				else if (playerDirection == 1)
+					projectiles.add(new Projectile(2, x+10, y+2, playerDirection, 3));
+				else if (playerDirection == 2)
+					projectiles.add(new Projectile(2, x+2, y+10, playerDirection, 3));
+				else if (playerDirection == 3)
+					projectiles.add(new Projectile(2, x-8, y+2, playerDirection, 3));
+				else
+					return;
+				
+				shotCooldown = 20;
+				mana -= 15;
+			}
 		}
 	}
 	
@@ -345,7 +388,21 @@ public class Player extends Playable {
 			blackHoleGrowing = true;
 		}
 	}
-	
+
+	public void createFrozenZone() {
+		if (!frozenZone) {
+			frozenZoneStage = 1;
+			frozenZoneTimer = 0;
+			frozenZoneX = x-5;
+			frozenZoneY = y-5;
+			frozenZone = true;
+		} else {
+			frozenZoneStage = 0;
+			frozenZoneTimer = 0;
+			frozenZone = false;
+		}
+	}
+
 	public void playableInRoomBubble(Playable playable) {
 		if (xBubble <= playable.getX() && playable.getX() <= (xBubble + bubbleRadie) && 
 			yBubble <= playable.getY() && playable.getY() <= (yBubble + bubbleRadie) &&
@@ -554,6 +611,16 @@ public class Player extends Playable {
 				g.fillOval(blackHoleX, blackHoleY, blackHoleRadie, blackHoleRadie);
 				g.setColor(Color.black);
 				g.drawOval(blackHoleX, blackHoleY, blackHoleRadie, blackHoleRadie);
+			}
+			
+			if (frozenZone) {
+				g.setColor(Color.cyan);
+				if (frozenZoneStage == 1)
+					g.fillRect(frozenZoneX, frozenZoneY, 20, 20);
+				else if (frozenZoneStage == 2)
+					g.fillRect(frozenZoneX, frozenZoneY, 40, 40);
+				else if (frozenZoneStage == 3)
+					g.fillRect(frozenZoneX, frozenZoneY, 60, 60);
 			}
 			
 			if (lightningRushing) {

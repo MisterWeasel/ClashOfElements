@@ -83,6 +83,8 @@ public class Gameplan extends JPanel implements ActionListener {
 					player.createBlackHole();
 				else if (player.getState() == Player.LIGHT)
 					player.fireLaser();
+				else if (player.getState() == Player.ICE)
+					player.createFrozenZone();
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_R) {
@@ -130,6 +132,10 @@ public class Gameplan extends JPanel implements ActionListener {
 				player.setState(4);
 			} else if (e.getKeyCode() == KeyEvent.VK_5) {
 				player.setState(5);
+			} else if (e.getKeyCode() == KeyEvent.VK_6) {
+				player.setState(6);
+			} else if (e.getKeyCode() == KeyEvent.VK_7) {
+				player.setState(7);
 			}
 
 			repaint();

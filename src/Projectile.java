@@ -49,6 +49,8 @@ public class Projectile {
 	}
 	
 	public void paint(Graphics g) {
+		Color iceBlue = new Color(100,150,255);
+
 		if (type == 0) {
 			g.setColor(Color.orange);
 			g.fillRect(x, y, 6, 6);
@@ -58,6 +60,21 @@ public class Projectile {
 				g.fillRect(x, y, 4, 16);
 			else if (direction%2 == 1)
 				g.fillRect(x, y, 16, 4);
+		} else if (type == 2) {
+			g.setColor(iceBlue);
+			if (direction == 0) {
+				g.fillRect(x, y+6, 6, 2);
+				g.fillRect(x+1, y, 4, 6);
+			} else if (direction == 1) {
+				g.fillRect(x, y, 2, 6);
+				g.fillRect(x+2, y+1, 6, 4);
+			} else if (direction == 2) {
+				g.fillRect(x, y, 6, 2);
+				g.fillRect(x+1, y+2, 4, 6);
+			} else if (direction == 3) {
+				g.fillRect(x+6, y, 2, 6);
+				g.fillRect(x, y+1, 6, 4);
+			}
 		}
 	}
 }
