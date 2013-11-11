@@ -113,6 +113,8 @@ public class Gameplan extends JPanel implements ActionListener {
 			if (e.getKeyCode() == KeyEvent.VK_G) {
 				if (player.getState() == Player.LIGHT)
 					player.lightningRush(true);
+				if (player.getState() == Player.DARKNESS)
+					player.becomeBlackBody(true);
 			}
 			
 			if (e.getKeyCode() == KeyEvent.VK_Q) {
@@ -171,6 +173,7 @@ public class Gameplan extends JPanel implements ActionListener {
 			
 			if (e.getKeyCode() == KeyEvent.VK_G) {
 				player.lightningRush(false);
+				player.becomeBlackBody(false);
 			}
 		}
 	};

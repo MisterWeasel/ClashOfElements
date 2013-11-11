@@ -1,6 +1,18 @@
 import java.awt.*;
 import java.util.LinkedList;
 
+/**
+ * TODO
+ * - inte byta stance under black hole
+ * - kunna grippa med negate utan att negatea någon
+ * - frozenZone ligger kvar på tid istället
+ * - blackBody ska agera gravitation på närliggande objekt
+ * - blackHole ska släppa ut sina fångar vid släpp <== IN PROCESS
+ * 
+ * @author Per
+ *
+ */
+
 public class Player extends Playable {
 	public static final int NORMAL = 0;
 	public static final int MANIPULATOR = 1;
@@ -40,6 +52,9 @@ public class Player extends Playable {
 	private int blackHoleY;
 	private final int blackHoleMaxRadie = 100;
 	private int blackHoleRadie;
+	private boolean blackBody;
+	private int blackBodyRadius;
+	private boolean changeBlackBodyRadius;
 
 	private boolean caughtByBlackHole;
 	private LinkedList<Playable> blackHoleCaptures;
@@ -90,6 +105,9 @@ public class Player extends Playable {
 		blackHoleRadie = 0;
 		blackHoleCaptures = new LinkedList<Playable>();
 		caughtByBlackHole = false;
+		blackBody = false;
+		blackBodyRadius = 0;
+		changeBlackBodyRadius = false;
 		
 		grip = false;
 		grippedIndex = 0;
@@ -116,7 +134,7 @@ public class Player extends Playable {
 	public int getMaxHP() {
 		return maxHP;
 	}
-	
+
 	public int getMana() {
 		return mana;
 	}
@@ -143,8 +161,21 @@ public class Player extends Playable {
 	}
 	
 	public void setState(int state) {
-		if (this.state == MANIPULATOR && state != MANIPULATOR)
+		if (this.state == MANIPULATOR && state != this.state)
 			bubbleRoom = false;
+		if (this.state == ICE && state != this.state)
+			frozenZone = false;
+		if (this.state == DARKNESS && state != this.state)
+			blackHole = false;
+		if (this.state == NEGATER && state != this.state) {
+			if (negateGrippableMonsters.size() > 0)
+				negateGrippableMonsters.get(grippedIndex).negateGrip(false);
+			for (int i = 0 ; i < negateGrippableMonsters.size() ; i++)
+				negateGrippableMonsters.get(i).negateGripReach(false);
+			
+			negateGrippableMonsters.clear();
+		}
+		
 		this.state = state;
 	}
 
@@ -220,6 +251,9 @@ public class Player extends Playable {
 			grippableMonsters.get(grippedIndex).goWest(west);
 	}
 
+	/**
+	 * Genväg: "movetomove"
+	 */
 	public void move() {
 		int movement;
 		if (lightningRushing) {
@@ -233,7 +267,11 @@ public class Player extends Playable {
 			movement = 2;
 		}
 
-		if (north) {
+		if (blackHole) {
+			// creating a black hole prevents player from moving
+		} else if (frozenZone && frozenZoneStage < 3) {
+			// creating a frozen zone prevents player from moving
+		} else if (north) {
 			y -= movement;
 		} else if (east) {
 			x += movement;
@@ -254,7 +292,16 @@ public class Player extends Playable {
 		else {
 			manaTimer = 0;
 		}
-		
+
+		if (blackBody) {
+			if (blackBodyRadius < 5)
+				blackBodyRadius = 40;
+			else if (changeBlackBodyRadius)
+				blackBodyRadius--;
+			
+			changeBlackBodyRadius = !changeBlackBodyRadius;
+		}
+
 		if (bubbleRoom && bubbleRadie < bubbleMaxRadie) {
 			bubbleRadie += 4;
 			xBubble -= 2;
@@ -305,8 +352,6 @@ public class Player extends Playable {
 
 			if (blackHoleRadie == blackHoleMaxRadie)
 				blackHoleGrowing = false;
-			if (blackHoleRadie == 0)
-				blackHole = false;
 		}
 		
 		if (frozenZone) {
@@ -386,6 +431,11 @@ public class Player extends Playable {
 			
 			blackHole = true;
 			blackHoleGrowing = true;
+		} else {
+			blackHole = false;
+			
+			for (int i = 0 ; i < blackHoleCaptures.size() ; i++)
+				blackHoleCaptures.get(i).repell(5-i, i);
 		}
 	}
 
@@ -554,6 +604,12 @@ public class Player extends Playable {
 		}
 	}
 	
+	public void becomeBlackBody(boolean blackBody) {
+		this.blackBody = blackBody;
+		if (!blackBody)
+			blackBodyRadius = 0;
+	}
+	
 	public void lightningRush(boolean rushing) {
 		if (rushing) {
 			if (mana >= 10) {
@@ -629,6 +685,11 @@ public class Player extends Playable {
 				g.fillRect(x+2, y+4, 6, 1);
 				g.fillRect(x, y+7, 10, 1);
 				g.fillRect(x+3, y+9, 4, 1);
+			} else if (blackBody) {
+				g.setColor(Color.black);
+				g.fillOval(x-1, y-1, 12, 12);
+				
+				g.drawOval(x + 5 - blackBodyRadius, y + 5 - blackBodyRadius, blackBodyRadius * 2, blackBodyRadius * 2);
 			} else {
 				g.setColor(Color.blue);
 				g.fillOval(x, y, 10, 10);
