@@ -346,10 +346,12 @@ public class Player extends Playable {
 						blackHoleCaptures.get(i).addY(diffY / (blackHoleRadie / 4));
 					}
 				} else {
-					for (int i = 0 ; i < blackHoleCaptures.size() ; i++)
+					for (int i = 0 ; i < blackHoleCaptures.size() ; i++) {
 						if (blackHoleCaptures.get(i).getX() == x &&
 							blackHoleCaptures.get(i).getY() == y)
 							blackHoleCaptures.get(i).setAlive(false);
+					}
+					blackHole = false;
 				}
 			}
 
