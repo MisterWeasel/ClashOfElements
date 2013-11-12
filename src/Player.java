@@ -143,6 +143,9 @@ public class Player extends Playable {
 		return maxMana;
 	}
 	
+	/**
+	 * @return The display String corresponding to the current state.
+	 */
 	public String getStateString() {
 		if (state == NORMAL)
 			return "Normal";
